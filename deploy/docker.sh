@@ -2,11 +2,11 @@
 
 _DEPLOY_DOCKER_CONTAINER_LABEL="sh.acme.autoload.domain"
 
-_DEPLOY_DOCKER_CONTAINER_KEY_FILE="sh.acme.autoload.key.file"
-_DEPLOY_DOCKER_CONTAINER_CERT_FILE="sh.acme.autoload.cert.file"
+_DEPLOY_DOCKER_CONTAINER_KEY_FILE_LABEL="sh.acme.autoload.key.file"
+_DEPLOY_DOCKER_CONTAINER_CERT_FILE_LABEL="sh.acme.autoload.cert.file"
 #DEPLOY_DOCKER_CONTAINER_CA_FILE="/path/to/ca.pem"
 #DEPLOY_DOCKER_CONTAINER_FULLCHAIN_FILE="/path/to/fullchain.pem"
-_DEPLOY_DOCKER_CONTAINER_RELOAD_CMD="sh.acme.autoload.reload.cmd"
+_DEPLOY_DOCKER_CONTAINER_RELOAD_CMD_LABEL="sh.acme.autoload.reload.cmd"
 
 _DEPLOY_DOCKER_WIKI="https://github.com/acmesh-official/acme.sh/wiki/deploy-to-docker-containers"
 
@@ -106,6 +106,11 @@ _deploy_container() {
     if ! _docker_exec "$_cid" "$_DEPLOY_DOCKER_CONTAINER_RELOAD_CMD"; then
       return 1
     fi
+  else
+    _info "Reloading: container"
+    if ! _docker_container_restart "${_cid}"; then
+      return 1
+    fi 
   fi
   return 0
 }
@@ -118,9 +123,6 @@ docker_deploy() {
   _cfullchain="$5"
   _cpfx="$6"
 
-  _container_found="false"
-  _DEPLOY_DOCKER_CONTAINER_LABEL="${_DEPLOY_DOCKER_CONTAINER_LABEL}=${_cdomain}"
-
   if _exists docker && docker version | grep -i docker >/dev/null; then
     _info "Using docker command"
     export _USE_DOCKER_COMMAND=1
@@ -128,13 +130,16 @@ docker_deploy() {
     export _USE_DOCKER_COMMAND=
   fi
 
-  while read -r _cid; do
+  _container_found="false"
+  _containers="$(_get_id ${_DEPLOY_DOCKER_CONTAINER_LABEL}=${_cdomain})"
+
+  for _cid in $_containers; do
     _container_found="true"
-    _DEPLOY_DOCKER_CONTAINER_KEY_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_KEY_FILE}")
-    _DEPLOY_DOCKER_CONTAINER_CERT_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_CERT_FILE}")
-    _DEPLOY_DOCKER_CONTAINER_RELOAD_CMD=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_RELOAD_CMD}")
+    _DEPLOY_DOCKER_CONTAINER_KEY_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_KEY_FILE_LABEL}")
+    _DEPLOY_DOCKER_CONTAINER_CERT_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_CERT_FILE_LABEL}")
+    _DEPLOY_DOCKER_CONTAINER_RELOAD_CMD=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_RELOAD_CMD_LABEL}")
     _deploy_container "${_cdomain}" "${_ckey}" "${_ccert}" "${_cca}" "${_cfullchain}" "${_cpfx}" "${_cid}" || return 1
-  done < <(_get_id "${_DEPLOY_DOCKER_CONTAINER_LABEL}")
+  done
 
   if [ "${_container_found}" == "false" ]; then
     _err "can not find container id"
@@ -168,7 +173,23 @@ _get_label_value() {
   _cid="$1"
   _label="$2"
   if [ "$_USE_DOCKER_COMMAND" ]; then
-    docker inspect --format='{{index .Config.Labels "${_label}"}}' "${_cid}"
+    docker inspect --format="{{index .Config.Labels \"${_label}\" }}" "${_cid}"
+  elif [ "$_USE_REST" ]; then
+    _err "Not implemented yet."
+    return 1
+  elif [ "$_USE_UNIX_SOCKET" ]; then
+    _err "Not implemented yet."
+    return 1
+  else
+    _err "Not implemented yet."
+    return 1
+  fi
+}
+
+_docker_container_restart() {
+  _cid="$1"
+  if [ "$_USE_DOCKER_COMMAND" ]; then
+    docker container restart "${_cid}" > /dev/null
   elif [ "$_USE_REST" ]; then
     _err "Not implemented yet."
     return 1
