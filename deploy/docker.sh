@@ -4,8 +4,9 @@ _DEPLOY_DOCKER_CONTAINER_LABEL="sh.acme.autoload.domain"
 
 _DEPLOY_DOCKER_CONTAINER_KEY_FILE_LABEL="sh.acme.autoload.key.file"
 _DEPLOY_DOCKER_CONTAINER_CERT_FILE_LABEL="sh.acme.autoload.cert.file"
-#DEPLOY_DOCKER_CONTAINER_CA_FILE="/path/to/ca.pem"
+_DEPLOY_DOCKER_CONTAINER_CA_FILE_LABEL="sh.acme.autoload.ca.file"
 _DEPLOY_DOCKER_CONTAINER_FULLCHAIN_FILE_LABEL="sh.acme.autoload.fullchain.file"
+_DEPLOY_DOCKER_CONTAINER_PFX_FILE_LABEL="sh.acme.autoload.pfx.file"
 _DEPLOY_DOCKER_CONTAINER_RELOAD_CMD_LABEL="sh.acme.autoload.reload.cmd"
 
 _DEPLOY_DOCKER_WIKI="https://github.com/acmesh-official/acme.sh/wiki/deploy-to-docker-containers"
@@ -51,18 +52,6 @@ _deploy_container() {
     fi
   fi
 
-  _getdeployconf DEPLOY_DOCKER_CONTAINER_CA_FILE
-  _debug2 DEPLOY_DOCKER_CONTAINER_CA_FILE "$DEPLOY_DOCKER_CONTAINER_CA_FILE"
-  if [ "$DEPLOY_DOCKER_CONTAINER_CA_FILE" ]; then
-    _savedeployconf DEPLOY_DOCKER_CONTAINER_CA_FILE "$DEPLOY_DOCKER_CONTAINER_CA_FILE"
-  fi
-
-  _getdeployconf DEPLOY_DOCKER_CONTAINER_PFX_FILE
-  _debug2 DEPLOY_DOCKER_CONTAINER_PFX_FILE "$DEPLOY_DOCKER_CONTAINER_PFX_FILE"
-  if [ "$DEPLOY_DOCKER_CONTAINER_PFX_FILE" ]; then
-    _savedeployconf DEPLOY_DOCKER_CONTAINER_PFX_FILE "$DEPLOY_DOCKER_CONTAINER_PFX_FILE"
-  fi
-
   _info "Container id: $_cid"
 
   if [ "$_DEPLOY_DOCKER_CONTAINER_KEY_FILE" ]; then
@@ -77,8 +66,8 @@ _deploy_container() {
     fi
   fi
 
-  if [ "$DEPLOY_DOCKER_CONTAINER_CA_FILE" ]; then
-    if ! _docker_cp "$_cid" "$_cca" "$DEPLOY_DOCKER_CONTAINER_CA_FILE"; then
+  if [ "$_DEPLOY_DOCKER_CONTAINER_CA_FILE" ]; then
+    if ! _docker_cp "$_cid" "$_cca" "$_DEPLOY_DOCKER_CONTAINER_CA_FILE"; then
       return 1
     fi
   fi
@@ -89,8 +78,8 @@ _deploy_container() {
     fi
   fi
 
-  if [ "$DEPLOY_DOCKER_CONTAINER_PFX_FILE" ]; then
-    if ! _docker_cp "$_cid" "$_cpfx" "$DEPLOY_DOCKER_CONTAINER_PFX_FILE"; then
+  if [ "$_DEPLOY_DOCKER_CONTAINER_PFX_FILE" ]; then
+    if ! _docker_cp "$_cid" "$_cpfx" "$_DEPLOY_DOCKER_CONTAINER_PFX_FILE"; then
       return 1
     fi
   fi
@@ -131,7 +120,9 @@ docker_deploy() {
     _container_found="true"
     _DEPLOY_DOCKER_CONTAINER_KEY_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_KEY_FILE_LABEL}")
     _DEPLOY_DOCKER_CONTAINER_CERT_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_CERT_FILE_LABEL}")
+    _DEPLOY_DOCKER_CONTAINER_CA_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_CA_FILE_LABEL}")
     _DEPLOY_DOCKER_CONTAINER_FULLCHAIN_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_FULLCHAIN_FILE_LABEL}")
+    _DEPLOY_DOCKER_CONTAINER_PFX_FILE=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_PFX_FILE_LABEL}")
     _DEPLOY_DOCKER_CONTAINER_RELOAD_CMD=$(_get_label_value "${_cid}" "${_DEPLOY_DOCKER_CONTAINER_RELOAD_CMD_LABEL}")
     _deploy_container "${_cdomain}" "${_ckey}" "${_ccert}" "${_cca}" "${_cfullchain}" "${_cpfx}" "${_cid}" || return 1
   done
