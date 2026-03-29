@@ -22,7 +22,7 @@ _deploy_container() {
   _cpfx="$6"
   _cid="$7"
 
-  _CONTAINER_NAME=$(docker inspect --format='{{.Name}}' $_cid)
+  _CONTAINER_NAME=$(docker inspect --format='{{.Name}}' "$_cid")
   _info "================================"
   _info "CONTAINER NAME: $_CONTAINER_NAME"
   _info "CONTAINER ID  : $_cid"
