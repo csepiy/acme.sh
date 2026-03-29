@@ -21,6 +21,20 @@ _deploy_container() {
   _cfullchain="$5"
   _cpfx="$6"
   _cid="$7"
+
+  _CONTAINER_NAME=$(docker inspect --format='{{.Name}}' $_cid)
+  _info "================================"
+  _info "CONTAINER NAME: $_CONTAINER_NAME"
+  _info "CONTAINER ID  : $_cid"
+  _info "DOMAIN        : $_cdomain"
+  _info "KEY           : $_ckey ($_DEPLOY_DOCKER_CONTAINER_KEY_FILE)"
+  _info "CERT          : $_ccert ($_DEPLOY_DOCKER_CONTAINER_CERT_FILE)"
+  _info "CA            : $_cca ($_DEPLOY_DOCKER_CONTAINER_CA_FILE)"
+  _info "FULLCHAIN     : $_cfullchain ($_DEPLOY_DOCKER_CONTAINER_FULLCHAIN_FILE)"
+  _info "PFX           : $_cpfx ($_DEPLOY_DOCKER_CONTAINER_PFX_FILE)"
+  _info "REBOOT CMD    : $_DEPLOY_DOCKER_CONTAINER_RELOAD_CMD"
+  _info "================================"
+
   _debug _cdomain "$_cdomain"
 
   if [ "$DOCKER_HOST" ]; then
@@ -93,7 +107,7 @@ _deploy_container() {
     _info "Reloading: container"
     if ! _docker_container_restart "${_cid}"; then
       return 1
-    fi 
+    fi
   fi
   return 0
 }
@@ -114,7 +128,7 @@ docker_deploy() {
   fi
 
   _container_found="false"
-  _containers="$(_get_id ${_DEPLOY_DOCKER_CONTAINER_LABEL}=${_cdomain})"
+  _containers="$(_get_id ${_DEPLOY_DOCKER_CONTAINER_LABEL}="${_cdomain}")"
 
   for _cid in $_containers; do
     _container_found="true"
@@ -127,7 +141,7 @@ docker_deploy() {
     _deploy_container "${_cdomain}" "${_ckey}" "${_ccert}" "${_cca}" "${_cfullchain}" "${_cpfx}" "${_cid}" || return 1
   done
 
-  if [ "${_container_found}" == "false" ]; then
+  if [ "${_container_found}" = "false" ]; then
     _err "can not find container id"
     return 1
   fi
