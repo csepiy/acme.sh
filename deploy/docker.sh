@@ -189,7 +189,7 @@ _get_label_value() {
 _docker_container_restart() {
   _cid="$1"
   if [ "$_USE_DOCKER_COMMAND" ]; then
-    docker container restart "${_cid}" > /dev/null
+    docker container restart "${_cid}" >/dev/null
   elif [ "$_USE_REST" ]; then
     _err "Not implemented yet."
     return 1
